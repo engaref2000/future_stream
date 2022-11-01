@@ -1,6 +1,10 @@
 import 'dart:async';
-
+import 'dart:developer' as devtool show log;
 import 'package:flutter/material.dart';
+
+extension Log on Object {
+  void log() => devtool.log(toString());
+}
 
 void main() {
   runApp(const MyApp());
@@ -94,11 +98,65 @@ void testit2() {
   //?output 1 15 2 9 14 4 5 6  8 7 10 13 11 12 3
 }
 
+void stream1() async {
+  // Stream.periodic(const Duration(seconds: 1), (x) => x)
+  //     .listen(((event) => print(event)));
+  // Stream.periodic(const Duration(seconds: 2), (x) => -x)
+  //     .listen(((event) => print(event)));
+  // Stream.fromFutures([
+  //   Future(() => 1),
+  //   Future.value(2),
+  //   Future.sync(() => 3),
+  //   Future.microtask(() => 4)
+  // ]).listen(print);
+  int value = 0;
+  StreamController streamController = StreamController<int>.broadcast();
+  final streamSubscription = streamController.stream.listen(print);
+  final otherStreamSubscription = streamController.stream.listen(print);
+  Timer.periodic(const Duration(seconds: 1), (timer) {
+    if (value > 5) {
+      'close timer , streamcontroller , steamsubscription $value'.log();
+      timer.cancel();
+      streamController.close();
+      streamSubscription.cancel();
+      otherStreamSubscription.cancel();
+    } else {
+      streamController.add(value++);
+    }
+  });
+
+  // streamController.stream.listen(print);
+
+  // int max = 0;
+  // await for (final value in streamController.stream) {
+  //   max = value > max ? value : max;
+  // }
+  // max.log();
+//or
+  int max = 0;
+  await streamController.stream.forEach((element) {
+    max = max > element ? max : element;
+  });
+
+  max.log();
+  asyncGenerator().listen(print);
+}
+
+var negativeStream =
+    Stream<int>.periodic(const Duration(milliseconds: 500), (x) => -x);
+Stream<int> asyncGenerator() async* {
+  for (int i = 0; i < 5; i++) {
+    yield i;
+  }
+  yield* negativeStream;
+}
+
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    stream1();
     return Scaffold(
       appBar: AppBar(
         title: Text('future and stream '),
